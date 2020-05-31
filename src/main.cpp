@@ -135,19 +135,20 @@ int main() {
                 if(lane > 0){
                   prep_change_lane_left = true;
                 }
-//                 if(lane < 2){
-//                   prep_change_lane_right = true;
-//                 }
+                else if(lane < 2){
+                  prep_change_lane_right = true;
+                }
               }
             } 
           }
           
+          // I should loop only once and determine all possible actions
           if (prep_change_lane_left == true){
             change_lane_left = true;
             for (int i = 0; i < sensor_fusion.size(); i++){
               // Check for car in left lane
               float d = sensor_fusion[i][6];
-              if (d < (4*lane) && d > (4*lane-4)){
+              if (d < (4*lane-4) && d > (4*lane-4-4)){
                 double vx = sensor_fusion[i][3];
                 double vy = sensor_fusion[i][4];
                 double check_speed = sqrt(vx*vx + vy*vy);
@@ -155,40 +156,80 @@ int main() {
 
                 check_car_s += ((double)(prev_size * .02 * check_speed));
 
-                if (abs((check_car_s - car_s)) < 15){
-                  change_lane_left = false; 
+                if (abs(check_car_s - car_s) < 30){
+                  change_lane_left = false;
+                  if (lane < 2){
+                    prep_change_lane_right = true;
+                  }
+                  break;
+                }
+                else if ((car_s > check_car_s) && (car_s - check_car_s < 50)){
+                  // Make sure we are slower than vehicle in front before passing  
+                  if (car_speed > check_speed){
+                    change_lane_left = false;
+                    if (lane < 2){
+                      prep_change_lane_right = true;
+                    }
+                    break;
+                  }
+                }
+                else if ((car_s <= check_car_s) && (check_car_s - car_s < 50)){
+                  // Make sure we are faster than vehicle behind before passing
+                  if (car_speed < check_speed){
+                    change_lane_left = false;
+                    if (lane < 2){
+                      prep_change_lane_right = true;
+                    }
+                    break;
+                  }
                 }
               }
             }
           }
           
-//           if (prep_change_lane_right == true){
-//             change_lane_right = true;
-//             for (int i = 0; i < sensor_fusion.size(); i++){
-//               // Check for car in left lane
-//               float d = sensor_fusion[i][6];
-//               if (d < (4*lane+4) && d > (4*lane)){
-//                 double vx = sensor_fusion[i][3];
-//                 double vy = sensor_fusion[i][4];
-//                 double check_speed = sqrt(vx*vx + vy*vy);
-//                 double check_car_s = sensor_fusion[i][5];
+          if (prep_change_lane_right == true){
+            change_lane_right = true;
+            for (int i = 0; i < sensor_fusion.size(); i++){
+              // Check for car in right lane
+              float d = sensor_fusion[i][6];
+              if (d < (4*lane+4+4) && d > (4*lane+4)){
+                double vx = sensor_fusion[i][3];
+                double vy = sensor_fusion[i][4];
+                double check_speed = sqrt(vx*vx + vy*vy);
+                double check_car_s = sensor_fusion[i][5];
 
-//                 check_car_s += ((double)(prev_size * .02 * check_speed));
-
-//                 if (abs((check_car_s - car_s)) < 15){
-//                   change_lane_right = false; 
-//                 }
-//               }
-//             }
-//           }
+                check_car_s += ((double)(prev_size * .02 * check_speed));
+                // Make sure there is enough space
+                if (abs(check_car_s - car_s) < 30){
+                  change_lane_right = false; 
+                  break;
+                }
+                else if ((car_s > check_car_s) && (car_s - check_car_s < 50)){
+                  // Make sure we are slower than vehicle in front before passing  
+                  if (car_speed > check_speed){
+                    change_lane_right = false;
+                    break;
+                  }
+                }
+                else if ((car_s <= check_car_s) && (check_car_s - car_s < 50)){
+                  // Make sure we are faster than vehicle behind before passing
+                  if (car_speed < check_speed){
+                    change_lane_right = false;
+                    break;
+                  }
+                }
+              }
+            }
+          }
           
           if (change_lane_left == true){
+          // Normally I shouldn't slow down while passing
             lane--; 
           }
           
-//           if (change_lane_right == true){
-//             lane++; 
-//           }
+          if (change_lane_right == true){
+            lane++; 
+          }
           
           if(too_close == true){
             ref_vel -= .224; 
