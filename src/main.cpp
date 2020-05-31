@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cmath>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "helpers.h"
@@ -54,7 +55,7 @@ int main() {
   // Start in lane 1
   int lane = 1;
   
-  // Target velocity
+  // Target velocity 
   double ref_vel = 0; //mph
 
   h.onMessage([&ref_vel, &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
@@ -112,6 +113,10 @@ int main() {
           }
           
           bool too_close = false;
+          bool prep_change_lane_left = false;
+          bool change_lane_left = false;
+          bool prep_change_lane_right = false;
+          bool change_lane_right = false;
           
           // Determine reference velocity
           for (int i = 0; i < sensor_fusion.size(); i++){
@@ -128,11 +133,62 @@ int main() {
               if ((check_car_s > car_s) && ((check_car_s - car_s) < 30)){
                 too_close = true; 
                 if(lane > 0){
-                  lane = 0; 
+                  prep_change_lane_left = true;
                 }
+//                 if(lane < 2){
+//                   prep_change_lane_right = true;
+//                 }
               }
             } 
           }
+          
+          if (prep_change_lane_left == true){
+            change_lane_left = true;
+            for (int i = 0; i < sensor_fusion.size(); i++){
+              // Check for car in left lane
+              float d = sensor_fusion[i][6];
+              if (d < (4*lane) && d > (4*lane-4)){
+                double vx = sensor_fusion[i][3];
+                double vy = sensor_fusion[i][4];
+                double check_speed = sqrt(vx*vx + vy*vy);
+                double check_car_s = sensor_fusion[i][5];
+
+                check_car_s += ((double)(prev_size * .02 * check_speed));
+
+                if (abs((check_car_s - car_s)) < 15){
+                  change_lane_left = false; 
+                }
+              }
+            }
+          }
+          
+//           if (prep_change_lane_right == true){
+//             change_lane_right = true;
+//             for (int i = 0; i < sensor_fusion.size(); i++){
+//               // Check for car in left lane
+//               float d = sensor_fusion[i][6];
+//               if (d < (4*lane+4) && d > (4*lane)){
+//                 double vx = sensor_fusion[i][3];
+//                 double vy = sensor_fusion[i][4];
+//                 double check_speed = sqrt(vx*vx + vy*vy);
+//                 double check_car_s = sensor_fusion[i][5];
+
+//                 check_car_s += ((double)(prev_size * .02 * check_speed));
+
+//                 if (abs((check_car_s - car_s)) < 15){
+//                   change_lane_right = false; 
+//                 }
+//               }
+//             }
+//           }
+          
+          if (change_lane_left == true){
+            lane--; 
+          }
+          
+//           if (change_lane_right == true){
+//             lane++; 
+//           }
           
           if(too_close == true){
             ref_vel -= .224; 
@@ -242,19 +298,8 @@ int main() {
             next_x_vals.push_back(x_point);
             next_y_vals.push_back(y_point);
           }
-//           for (int i = 0; i < 50-prev_size; ++i) {    
-//             next_x_vals.push_back(ref_x+(0.3)*cos(ref_yaw+(i+1)*(pi()/100)));
-//             next_y_vals.push_back(ref_y+(0.3)*sin(ref_yaw+(i+1)*(pi()/100)));
-//             ref_x += (0.3)*cos(ref_yaw+(i+1)*(pi()/100));
-//             ref_y += (0.3)*sin(ref_yaw+(i+1)*(pi()/100));
-//           }
          
           // END
-//           double dist_inc = 0.5;
-//           for (int i = 0; i < 50; ++i) {
-//             next_x_vals.push_back(car_x+(dist_inc*i)*cos(deg2rad(car_yaw)));
-//             next_y_vals.push_back(car_y+(dist_inc*i)*sin(deg2rad(car_yaw)));
-//           }
                     
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
