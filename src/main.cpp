@@ -116,7 +116,7 @@ int main() {
           bool change_lane_left = true;
           bool change_lane_right = true;
           
-          // Determine reference velocity
+          // Determine all possible actions first 
           for (int i = 0; i < sensor_fusion.size(); i++){
             float d = sensor_fusion[i][6];
             double vx = sensor_fusion[i][3];
@@ -130,14 +130,14 @@ int main() {
             if (d < (2+4*lane+2) && d > (2+4*lane-2)){
               // If there's a car in front of us slow down
               if ((check_car_s > car_s) && ((check_car_s - car_s) < 30)){
-                if (car_speed > check_speed + 5)
-                  too_close = true;
+//                 if (car_speed > check_speed + 5)
+                too_close = true;
               }
             } 
             // Check left lane
             else if (d < (4*lane-4) && d > (4*lane-4-4)){
               if (abs(check_car_s - car_s) < 30){
-                  change_lane_left = false;
+                change_lane_left = false;
               }
               else if ((car_s > check_car_s) && (car_s - check_car_s < 50)){
                 // Make sure we are faster than vehicle behind before passing  
@@ -173,7 +173,7 @@ int main() {
             }
           }
           
-          // Plan best action
+          // Planner
           if (too_close){
             ref_vel -= .224;
             if (change_lane_left && lane > 0){
