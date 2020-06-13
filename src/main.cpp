@@ -128,10 +128,11 @@ int main() {
             
             // Check current lane first
             if (d < (2+4*lane+2) && d > (2+4*lane-2)){
-              // If there's a car in front of us slow down
+              // If there's a car in front of us slow down until we match its speed
               if ((check_car_s > car_s) && ((check_car_s - car_s) < 30)){
-//                 if (car_speed > check_speed + 5)
-                too_close = true;
+                if (car_speed > check_speed){
+                  too_close = true;
+                }
               }
             } 
             // Check left lane
@@ -155,6 +156,7 @@ int main() {
                  
             // Check right lane
             else if (d < (4+4*lane+4) && d > (4*lane+4)){
+              // Make sure the lane is free
               if (abs(check_car_s - car_s) < 30){
                 change_lane_right = false;
               }
