@@ -135,7 +135,7 @@ int main() {
               }
             } 
             // Check left lane
-            else if (d < (4*lane-4) && d > (4*lane-4-4)){
+            else if (d < (4+4*lane-4) && d > (4*lane-4)){
               if (abs(check_car_s - car_s) < 30){
                 change_lane_left = false;
               }
@@ -154,7 +154,7 @@ int main() {
             }
                  
             // Check right lane
-            else if (d < (4*lane+4+4) && d > (4*lane+4)){
+            else if (d < (4+4*lane+4) && d > (4*lane+4)){
               if (abs(check_car_s - car_s) < 30){
                 change_lane_right = false;
               }
